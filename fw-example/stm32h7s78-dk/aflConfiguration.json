@@ -1,0 +1,25 @@
+{
+    "ram": [
+        {"name":"SRAM", "addr":"0x24000000", "size":"0x20000"}, 
+        {"name":"DTCM", "addr":"0x20000000", "size":"0x20000"}
+    ],
+    "flash": [{"addr": "0x8000000", 
+    "size": "0x20000", 
+    "alias_at":"0x0", 
+    "name":"code flash#0", 
+    "file": "/home/user/TriforceQEMU/patches/fw-example/stm32h7s78-dk/stm32h7s78-dk.bin"}],
+    "mmio": [{"mmio_start":"0x40000000", "mmio_end": "0x60000000"}],
+    "patch": [
+        {"addr": "0x08002648", "name": "HAL_Delay"}, 
+        {"addr": "0x080002c8", "name": "uart_printf"}
+    ],
+    "symbolize_at_pc":["0x800041e"],
+	"aflPanicAddr": "0x080021ea",
+	"aflDmesgAddr": "0x80021ea",
+    "entry_address": "0x80024cd",
+    "exit_at": [
+ 	    {"addr":"0x08000b40", "name":"Error_Handler"}
+    ],
+    "interrupt_firing":{"mode":"round_robin", "frequency": "0x200"},
+    "cpu_model": "cortex-m7"
+}

@@ -1,0 +1,26 @@
+{
+    "ram": [
+        {"name":"SRAM", "addr":"0x24000000", "size":"0x20000"}, 
+        {"name":"DTCM", "addr":"0x20000000", "size":"0x20000"}
+    ],
+    "flash": [{"addr": "0x8000000", 
+    "size": "0x20000", 
+    "alias_at":"0x0", 
+    "name":"code flash", 
+    "file":"/home/user/TriforceQEMU/patches/fw-example/nucleo753zi/nucleo-h753zi-RnR.bin"}],
+    "mmio": [{"mmio_start":"0x40000000", "mmio_end": "0x60000000"}
+    ],    
+    "patch": [
+        {"addr": "0x080024e8", "name": "HAL_Delay"}, 
+        {"addr": "0x80040f8", "name": "printf"}
+    ],
+	"aflPanicAddr": "0x08003d30",
+	"aflDmesgAddr": "0x08003d30",
+    "entry_address": "0x8003de1",
+    "init_state": [{"r0":"0x12345678"}, {"r1":"0xdeadbeef"}],
+    "exit_at": [
+ 	    {"addr":"0x08003d20", "name":"Error_Handler"}
+    ],
+    "cpu_model": "cortex-m7"
+
+}
