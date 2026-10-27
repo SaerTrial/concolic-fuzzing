@@ -28,9 +28,11 @@ repository visibility, remote branch or published website has been changed.
    `codex/flush-coverage-export` commit before publishing the superproject's new
    gitlinks; those commits are not yet available on GitHub.
 2. **Firmware provenance.** The root repository ships H753ZI and H7S78-DK firmware
-   binaries but does not include their source, build recipe or explicit
-   redistribution information. Record where they came from and the intended
-   release terms, or choose a separate reproducible example.
+   binaries. Exact matching prebuilt copies and candidate sources were found in
+   the existing `record-and-replay` project; see
+   [firmware provenance](firmware-provenance.md). The corresponding source
+   revision, reproducible build and complete redistribution information remain
+   to be established.
 3. **History contents.** The removed Vim swap remains in the original root
    history. It contains workstation metadata and recovered script text.
    Decide whether to retain that history or prepare a separate cleaned release

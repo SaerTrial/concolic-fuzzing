@@ -210,5 +210,6 @@ full text and [LICENSING.md](LICENSING.md) for scope and exclusions.
 This work builds on QEMU, AFL/Triforce integration, SymQEMU, SymCC and the Qsym
 backend. Their existing licenses and attribution files continue to apply.
 The bundled firmware binaries are excluded from the root license grant;
-their source/build recipe and redistribution information remain to be recorded
-in [release readiness](docs/release-readiness.md).
+their [provenance record](docs/firmware-provenance.md) identifies matching
+prebuilt copies, with source/build and redistribution work remaining in
+[release readiness](docs/release-readiness.md).
