@@ -101,4 +101,5 @@ Append `-covFile cov.ezcov` to dump code coverage in order.
 * Porting to RH850
 * More coordination strategies between fuzzer and concolic executor
 * More firmset under test (fuzzware, P2IM)
+* Benchmarking pure AFL++ in hybrid mode and the one with concolic execution in use
 
