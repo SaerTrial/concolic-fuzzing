@@ -86,8 +86,35 @@ Writing a user hook callback is kind of painful in this project since supporting
 Now, it only supports round-robin, and others like trigger a specific ISR at a PC, random pickup based on fuzzing values, etc, are still work in progress. Since this project aims at fuzzing exotic or ECU arch, implementing more interrupt firing strategies is not priority. Especially, this work becomes more complex when an interrupt controller is not available in QEMU and requires a build-up from scratch. Not really funny! 
 
 
-# Colorizing code coverage in Ghidra Catographyer?
-Append `-covFile cov.ezcov` to dump code coverage in order.
+## Visualizing coverage in Ghidra Cartographer
+
+Export observed address ranges as EZCOV coverage:
+
+```sh
+./TriforceQEMU/build/qemu-system-arm \
+  -M rehost-fuzzing -display none \
+  -kernel runs/nucleo753zi.json -aflFile runs/input/seed \
+  -covFile runs/seed.ezcov
+```
+
+Open the matching `fw-example/nucleo753zi/nucleo-h753zi-RnR.elf` in Ghidra,
+with [Cartographer](https://github.com/nccgroup/Cartographer) installed. Select
+**Tools → Code Coverage → Load Code Coverage File(s)** and load the EZCOV file.
+**Window → Code Coverage** opens the function coverage table; the Listing,
+Decompiler and Function Graph can show the executed regions.
+
+![Cartographer coverage highlights in the Ghidra Listing and Decompiler for the NUCLEO-H753ZI firmware](imgs/ghidra-coverage.png)
+
+*A view from this project: Cartographer highlights loaded coverage ranges in the
+disassembly and decompiled C. This illustration is separate from the runs in
+the [validation record](docs/validation.md).*
+
+The overlay describes the ranges in the loaded file. The current exporter does
+not include every block-entry PC observed in the execution log; see
+[the export checks](docs/validation.md#coverage-export). An uncolored region is
+therefore not proof that execution never reached it. The overlay also does not
+measure physical-device coverage or prove a hybrid-fuzzing advantage. Use the
+same firmware image and address mapping in Ghidra and the emulator.
 
 # Utility
 * `utils/aggregate_queue_cov.sh`: make a cumulative code coverage;
@@ -103,6 +130,16 @@ Append `-covFile cov.ezcov` to dump code coverage in order.
 * More firmset under test (fuzzware, P2IM)
 * Benchmarking pure AFL++ in hybrid mode and the one with concolic execution in use
 
-# License
+## Attribution and licensing
 
-Original project code and documentation are licensed under the [GNU General Public License v3.0 only](LICENSE) (GPL-3.0-only). See [LICENSING.md](LICENSING.md) for third-party component and firmware licensing.
+The original scripts, tests, configurations and documentation in this
+superproject are licensed under **GPL-3.0-only**. See [LICENSE](LICENSE) for the
+full text and [LICENSING.md](LICENSING.md) for scope and exclusions.
+
+This work builds on QEMU, AFL/Triforce integration, SymQEMU, SymCC and the Qsym
+backend. Their existing licenses and attribution files continue to apply.
+The firmware examples were created by this project's author. Their original
+application code uses GPL-3.0-only; vendor/runtime components retain their own
+terms. The [provenance record](docs/firmware-provenance.md) identifies matching
+prebuilt copies, with source/build and component-notice packaging remaining in
+[release readiness](docs/release-readiness.md).
