@@ -1,7 +1,16 @@
-# Publication preparation
+# Publication status
 
-The proposed changes are local on branch `public-release-prep`. No
-repository visibility, remote branch or published website has been changed.
+On 2026-10-27, the owner made all three repositories public. The prepared code
+was pushed to the default branches below, with matching review branches:
+
+| Repository | Default branch | Review branch |
+| --- | --- | --- |
+| [concolic-fuzzing](https://github.com/SaerTrial/concolic-fuzzing) | `main` | `public-release-prep` |
+| [TriforceQEMU](https://github.com/SaerTrial/TriforceQEMU) | `main` | `flush-coverage-export` |
+| [concolic-replay](https://github.com/SaerTrial/concolic-replay) | `master` | `flush-coverage-export` |
+
+The blog is pushed only to `hybrid-fuzzing-draft` in the site repository, under
+`_drafts/`. The site's `main` branch and published posts were not changed.
 
 ## Prepared
 
@@ -19,25 +28,21 @@ repository visibility, remote branch or published website has been changed.
 - [x] Add the author's Ghidra/Cartographer screenshot to the README and blog draft.
 - [x] License the project's original material under GPL-3.0-only, preserving third-party terms.
 - [x] Confirm the author's ownership of both firmware examples and record their original application code under GPL-3.0-only.
+- [x] Push both emulator fixes before publishing the superproject's matching gitlinks.
+- [x] Verify public visibility of the superproject and both emulator repositories without authentication.
+- [x] Push the blog draft branch while leaving the site's main branch unchanged.
 
-## Publication decisions still needed
+## Remaining work
 
-1. **Repository set.** The superproject references `SaerTrial/TriforceQEMU`
-   and `SaerTrial/concolic-replay`. Both returned HTTP 404 to anonymous requests
-   during preparation. Public cloning requires access to those exact revisions,
-   so the release needs to cover the forks as well. Push each fork's local
-   `flush-coverage-export` commit before publishing the superproject's new
-   gitlinks; those commits are not yet available on GitHub.
-2. **Firmware provenance.** The root repository ships H753ZI and H7S78-DK firmware
+1. **Firmware provenance.** The root repository ships H753ZI and H7S78-DK firmware
    binaries. Exact matching prebuilt copies and candidate sources were found in
    the existing `record-and-replay` project; see
    [firmware provenance](firmware-provenance.md). The author confirmed that he
    created both examples. The corresponding source revision, reproducible build
    and component notices remain to be packaged for publication.
-3. **History contents.** The removed Vim swap remains in the original root
+2. **History contents.** The removed Vim swap remains in the original root
    history. It contains workstation metadata and recovered script text.
-   Decide whether to retain that history or prepare a separate cleaned release
-   history. No history rewriting has been performed.
+   Publication preserves that history; no history rewriting has been performed.
 
 ## Review scope and remaining verification
 
@@ -53,9 +58,10 @@ original material now uses GPL-3.0-only, as selected for this release;
 upstream notices. The author's original firmware application contributions also
 use GPL-3.0-only; embedded vendor/runtime code retains its existing terms.
 
-Before publication, review the forks' contributed files/history and all bundled
-artifacts, settle the decisions above, and then verify an anonymous clone and
-the documented build from the chosen public revisions.
+Anonymous repository checks confirm public visibility for all three repositories.
+The build and runtime checks are recorded in [validation.md](validation.md).
+Firmware source packaging and a broader contributed-history review remain
+separate follow-up work; the checks above do not establish a complete audit.
 
 The current runtime limitations are documented in [validation.md](validation.md):
 AFL reports variable coverage for some inputs, and the EZCOV exporter omits some
