@@ -1,112 +1,67 @@
-#!/bin/bash
-echo "================================================="
-echo " Build AFL+QEMU and full system SymQEMU "
-echo "================================================="
+#!/usr/bin/env bash
+set -euo pipefail
 
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+cd "$ROOT"
 
-echo "[*] Performing basic sanity checks..."
-
-if [ ! "`uname -s`" = "Linux" ]; then
-
-  echo "[-] Error: concolic fuzzing is supported only on Linux."
-  exit 1
-fi
-
-command -v wget >/dev/null 2>&1 || {
-    echo "[-] wget is required but not installed"
+if [[ $(uname -s) != Linux ]]; then
+    echo "Error: the emulator build requires Linux." >&2
     exit 1
-}
+fi
 
-command -v cargo >/dev/null 2>&1 || {
-    echo "[-] curl is required but not installed"
+for tool in git make ninja cmake python3 cargo pkg-config cc c++; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "Error: $tool is required; see README.md." >&2
+        exit 1
+    }
+done
+
+# Keep the emulators at the revisions recorded by the superproject.
+git submodule update --init TriforceQEMU concolic-replay
+git -C concolic-replay submodule update --init subprojects/symcc-rt
+# The Qsym backend links system Z3; its third_party/z3 checkout is not needed.
+git -C concolic-replay/subprojects/symcc-rt submodule update --init src/backends/qsym/qsym
+
+# Pin both the release name and its commit.
+AFL_REV=474ff18ba2a7999a518a4d194fcd5a1f87c3625d
+if [[ ! -e AFLplusplus ]]; then
+    git clone --depth 1 --branch v4.34c https://github.com/AFLplusplus/AFLplusplus.git AFLplusplus
+fi
+if [[ $(git -C AFLplusplus rev-parse HEAD) != "$AFL_REV" ]]; then
+    echo "Error: AFLplusplus must be at v4.34c ($AFL_REV). Preserve or move your existing checkout first." >&2
     exit 1
-}
-
-if [ ! -f "./AFL++4.34.tar.gz" ]; then
-  wget https://github.com/AFLplusplus/AFLplusplus/archive/refs/tags/v4.34c.tar.gz -O AFL++4.34.tar.gz
-  tar -xzf AFL++4.34.tar.gz >/dev/null 2>&1
-  mv AFLplusplus-4.34c AFLplusplus 
 fi
 
-cd "./AFLplusplus"
-make 
-cd "../"
+# Avoid installing build dependencies into the system Python environment.
+python3 -m venv .venv-build
+source .venv-build/bin/activate
+python -m pip install 'tomli==2.2.1'
 
+# System emulation supplies coverage; AFL compiler instrumentation is not needed.
+make -C AFLplusplus -j "${JOBS:-4}" afl-fuzz afl-showmap
+test -x AFLplusplus/afl-fuzz
+test -x AFLplusplus/afl-showmap
 
-if [ ! -f "./AFLplusplus/afl-fuzz" ]; then
-  echo "[-] Error: afl-fuzz not found!"
-  exit 1
-fi
+for emulator in TriforceQEMU concolic-replay; do
+    echo "Building $emulator..."
+    (
+        mkdir -p "$emulator/build"
+        cd "$emulator/build"
+        ../configure \
+            --audio-drv-list= \
+            --disable-sdl \
+            --disable-gtk \
+            --disable-vte \
+            --disable-opengl \
+            --disable-virglrenderer \
+            --disable-werror \
+            --target-list=arm-softmmu
+        ninja -j "${JOBS:-4}"
+        test -x qemu-system-arm
+    )
+done
 
-if [ ! -f "./AFLplusplus/afl-showmap" ]; then
-  echo "[-] Error: afl-showmap not found!"
-  exit 1
-fi
-
-
-if [ ! -d "./TriforceQEMU" ]; then
-  echo "[-] Error: TriforceQEMU not found!"
-  exit 1
-fi
-
-if [ ! -d "concolic-replay" ]; then
-  echo "[-] Error: concolic-replay not found!"
-  exit 1
-fi
-
-
-pip install tomli
-echo "[*] Building TriforceQEMU...."
-
-cd "./TriforceQEMU"
-mkdir -p build && cd build
-../configure                                                    \
-    --audio-drv-list=                                           \
-    --disable-sdl                                               \
-    --disable-gtk                                               \
-    --disable-vte                                               \
-    --disable-opengl                                            \
-    --disable-virglrenderer                                     \
-    --disable-werror                                            \
-    --target-list=arm-softmmu
-ninja
-
-if [ ! -f "./qemu-system-arm" ]; then
-
-  echo "[-] Error: Build qemu-system-arm failed!"
-  exit 1
-
-fi
-
-
-echo "[*] Building concolic executor..."
-
-cd ../../concolic-replay
-git submodule update --init --recursive subprojects/symcc-rt
-mkdir -p build && cd build
-../configure                                                    \
-    --audio-drv-list=                                           \
-    --disable-sdl                                               \
-    --disable-gtk                                               \
-    --disable-vte                                               \
-    --disable-opengl                                            \
-    --disable-virglrenderer                                     \
-    --disable-werror                                            \
-    --target-list=arm-softmmu
-ninja
-
-if [ ! -f "./qemu-system-arm" ]; then
-
-  echo "[-] Error: Build qemu-system-arm failed!"
-  exit 1
-
-fi
-
-# top directory
-cd "../../"
-
-echo "[*] Installing symcc fuzzing helper that makes use of full system concolic execution"
-cargo install --path ./concolic-replay/symcc_fuzzing_helper
-
-
-echo "[+] Done. Ready for fuzzing..."
+# Install locally so the README does not depend on a particular shell PATH.
+cargo install --locked --path concolic-replay/symcc_fuzzing_helper --root "$ROOT/build/tools"
+test -x build/tools/bin/symcc_fuzzing_helper
+echo "Build complete. Follow README.md to prepare a configuration and start both processes."

@@ -1,0 +1,18 @@
+# Local builds and downloaded dependencies
+/AFLplusplus/
+/AFL++*.tar.gz
+/.venv-build/
+/build/
+/runs/
+
+# Execution artifacts
+*.log
+*.ezcov
+__pycache__/
+*.pyc
+
+# Editor and OS state
+*.swp
+*.swo
+*~
+.DS_Store

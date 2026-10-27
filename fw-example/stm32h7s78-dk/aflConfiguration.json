@@ -7,7 +7,7 @@
     "size": "0x20000", 
     "alias_at":"0x0", 
     "name":"code flash#0", 
-    "file": "/home/user/TriforceQEMU/patches/fw-example/stm32h7s78-dk/stm32h7s78-dk.bin"}],
+    "file": "stm32h7s78-dk.bin"}],
     "mmio": [{"mmio_start":"0x40000000", "mmio_end": "0x60000000"}],
     "patch": [
         {"addr": "0x08002648", "name": "HAL_Delay"}, 

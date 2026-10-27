@@ -7,7 +7,7 @@
     "size": "0x20000", 
     "alias_at":"0x0", 
     "name":"code flash", 
-    "file":"/home/user/TriforceQEMU/patches/fw-example/nucleo753zi/nucleo-h753zi-RnR.bin"}],
+    "file":"nucleo-h753zi-RnR.bin"}],
     "mmio": [{"mmio_start":"0x40000000", "mmio_end": "0x60000000"}
     ],
     "patch": [
