@@ -209,7 +209,8 @@ full text and [LICENSING.md](LICENSING.md) for scope and exclusions.
 
 This work builds on QEMU, AFL/Triforce integration, SymQEMU, SymCC and the Qsym
 backend. Their existing licenses and attribution files continue to apply.
-The bundled firmware binaries are excluded from the root license grant;
-their [provenance record](docs/firmware-provenance.md) identifies matching
-prebuilt copies, with source/build and redistribution work remaining in
+The firmware examples were created by this project's author. Their original
+application code uses GPL-3.0-only; vendor/runtime components retain their own
+terms. The [provenance record](docs/firmware-provenance.md) identifies matching
+prebuilt copies, with source/build and component-notice packaging remaining in
 [release readiness](docs/release-readiness.md).

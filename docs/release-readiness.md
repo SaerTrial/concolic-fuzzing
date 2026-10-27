@@ -1,6 +1,6 @@
 # Publication preparation
 
-The proposed changes are local on branch `codex/public-release-prep`. No
+The proposed changes are local on branch `public-release-prep`. No
 repository visibility, remote branch or published website has been changed.
 
 ## Prepared
@@ -17,7 +17,8 @@ repository visibility, remote branch or published website has been changed.
 - [x] Remove the editor swap file from the proposed tree; preserve a local backup.
 - [x] Add a code walkthrough and an unpublished blog draft in the site repository.
 - [x] Add the author's Ghidra/Cartographer screenshot to the README and blog draft.
-- [x] License the superproject's original material under GPL-3.0-only, with explicit third-party and firmware exclusions.
+- [x] License the project's original material under GPL-3.0-only, preserving third-party terms.
+- [x] Confirm the author's ownership of both firmware examples and record their original application code under GPL-3.0-only.
 
 ## Publication decisions still needed
 
@@ -25,14 +26,14 @@ repository visibility, remote branch or published website has been changed.
    and `SaerTrial/concolic-replay`. Both returned HTTP 404 to anonymous requests
    during preparation. Public cloning requires access to those exact revisions,
    so the release needs to cover the forks as well. Push each fork's local
-   `codex/flush-coverage-export` commit before publishing the superproject's new
+   `flush-coverage-export` commit before publishing the superproject's new
    gitlinks; those commits are not yet available on GitHub.
 2. **Firmware provenance.** The root repository ships H753ZI and H7S78-DK firmware
    binaries. Exact matching prebuilt copies and candidate sources were found in
    the existing `record-and-replay` project; see
-   [firmware provenance](firmware-provenance.md). The corresponding source
-   revision, reproducible build and complete redistribution information remain
-   to be established.
+   [firmware provenance](firmware-provenance.md). The author confirmed that he
+   created both examples. The corresponding source revision, reproducible build
+   and component notices remain to be packaged for publication.
 3. **History contents.** The removed Vim swap remains in the original root
    history. It contains workstation metadata and recovered script text.
    Decide whether to retain that history or prepare a separate cleaned release
@@ -49,7 +50,8 @@ The forks retain QEMU license files and upstream source notices. The
 `symcc_fuzzing_helper` manifest identifies GPL-3.0-or-later. The superproject's
 original material now uses GPL-3.0-only, as selected for this release;
 [LICENSING.md](../LICENSING.md) describes its scope. This does not replace
-upstream notices or assign a license to the firmware.
+upstream notices. The author's original firmware application contributions also
+use GPL-3.0-only; embedded vendor/runtime code retains its existing terms.
 
 Before publication, review the forks' contributed files/history and all bundled
 artifacts, settle the decisions above, and then verify an anonymous clone and
@@ -64,7 +66,7 @@ coverage or finds more bugs.
 ## Blog discussion
 
 The draft is in the site's `_drafts/hybrid-fuzzing-for-cortex-m-firmware.md`,
-on branch `codex/hybrid-fuzzing-draft`. It is excluded from a normal Jekyll build.
+on branch `hybrid-fuzzing-draft`. It is excluded from a normal Jekyll build.
 
 The proposed angle is the contract between the concrete and symbolic executions:
 input-byte meaning, environment modeling, queue feedback and the trace-check bug.

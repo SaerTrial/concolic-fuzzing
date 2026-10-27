@@ -1,7 +1,9 @@
-# Firmware provenance investigation
+# Firmware provenance
 
-Checked on 2026-10-27. The firmware binaries are excluded from the
-superproject's GPL-3.0-only license grant; see [LICENSING.md](../LICENSING.md).
+Checked on 2026-10-27. Zhanpeng Huang confirmed that he created the H753ZI and
+H7S78-DK examples. His original application contributions use GPL-3.0-only;
+vendor/runtime components retain their own terms. See
+[LICENSING.md](../LICENSING.md).
 
 ## Matching prebuilt copies
 
@@ -32,7 +34,7 @@ Before including the firmware in a public release:
 
 - Identify the source revision and build recipe for the bundled images, or
   rebuild a documented example from known source.
-- Confirm the project's original contributions and applicable release terms.
+- Package the original application source under GPL-3.0-only.
 - Preserve the vendor/component license notices required by that source set.
 
 No files in the existing source project were changed during this investigation.

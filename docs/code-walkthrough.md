@@ -94,9 +94,9 @@ measured coverage plateau before launching concolic execution.
 | `tests/check_coverage_export.py` | Runs three inputs through both built emulators, checks EZCOV record integrity and compares their nonempty traces. |
 | Both `hw/{rehosting,concolic}/configurable_machine.c` files | Enable line buffering when opening `-covFile`, so input exhaustion through `_exit()` does not discard pending records. |
 | `.gitignore` | Keeps builds, logs and editor state out of future commits. |
-| `LICENSE`, `LICENSING.md` and script headers | Declare GPL-3.0-only for the superproject's original material and distinguish upstream components and bundled firmware. |
+| `LICENSE`, `LICENSING.md` and script headers | Declare GPL-3.0-only for the project's original material and distinguish third-party components in the emulators and firmware. |
 
-The coverage fix is committed on `codex/flush-coverage-export` in each fork;
+The coverage fix is committed on `flush-coverage-export` in each fork;
 the superproject pins those commits. It changes only coverage-file buffering.
 The exporter and block-entry logger observe execution at different points, and
 some logged PCs remain absent from the exported ranges. This fix addresses file

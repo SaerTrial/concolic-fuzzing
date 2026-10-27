@@ -8,7 +8,7 @@ benchmark or evidence of hardware-accurate STM32 emulation.
 - Host: `alexis`, Linux x86-64, Ubuntu 22.04.5 LTS.
 - GCC 11.4.0; Python 3.10.12; CMake 3.22.1; Ninja 1.10.1; Cargo 1.92.0; Z3 4.8.12.
 - Root baseline: `2d93c85c2e03a3c34ba6fe0b47f5bb9e06ef9d28`, plus the
-  changes on `codex/public-release-prep`.
+  changes on `public-release-prep`.
 - TriforceQEMU full-build baseline: `0618b8d84c66c3a2436cb2da43e42a2be781af95`;
   coverage fix: `29165260d6351cb7f223fe5c17ace142ccd1d7e5`.
 - concolic-replay full-build baseline: `6d2c699e3dd82bc1f70d94e33293d51b7677537b`;

@@ -26,9 +26,13 @@ GPL-3.0-only declaration does not relicense either emulator fork as a whole.
 
 ## Bundled firmware
 
-The `.bin` and `.elf` files in `fw-example/` are excluded from the license grant
-above. Matching prebuilt copies and candidate sources are recorded in
-[firmware provenance](docs/firmware-provenance.md); the corresponding source
-revision and complete redistribution terms remain to be established. The
-project's license choice does not establish permission to redistribute those
-binaries. This remains an item in [release readiness](docs/release-readiness.md).
+Zhanpeng Huang confirmed that he created both firmware examples. His original
+application contributions to those examples are also licensed under
+GPL-3.0-only. The compiled images additionally contain vendor/runtime components
+whose existing terms continue to apply; this grant does not relicense those
+components.
+
+Matching prebuilt copies and candidate sources are recorded in
+[firmware provenance](docs/firmware-provenance.md). Packaging the corresponding
+source, build instructions and component notices remains part of
+[release readiness](docs/release-readiness.md).
