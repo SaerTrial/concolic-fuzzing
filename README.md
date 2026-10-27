@@ -199,7 +199,8 @@ same firmware image and address mapping in Ghidra and the emulator.
   deduplicating them. Neither is a validated coverage benchmark.
 
 RH850 support, additional interrupt strategies, more firmware targets and
-coordination policies remain future work.
+coordination policies remain future work. Controlled AFL-only versus hybrid
+benchmarks with equal resource budgets are also planned.
 
 ## Attribution and licensing
 
