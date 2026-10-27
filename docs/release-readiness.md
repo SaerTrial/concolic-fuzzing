@@ -17,6 +17,7 @@ repository visibility, remote branch or published website has been changed.
 - [x] Remove the editor swap file from the proposed tree; preserve a local backup.
 - [x] Add a code walkthrough and an unpublished blog draft in the site repository.
 - [x] Add the author's Ghidra/Cartographer screenshot to the README and blog draft.
+- [x] License the superproject's original material under GPL-3.0-only, with explicit third-party and firmware exclusions.
 
 ## Publication decisions still needed
 
@@ -26,14 +27,11 @@ repository visibility, remote branch or published website has been changed.
    so the release needs to cover the forks as well. Push each fork's local
    `codex/flush-coverage-export` commit before publishing the superproject's new
    gitlinks; those commits are not yet available on GitHub.
-2. **Original-file license.** There is no top-level license for the original
-   orchestration scripts and documentation. The owner needs to choose the
-   intended license. Existing third-party notices remain unchanged.
-3. **Firmware provenance.** The root repository ships H753ZI and H7S78-DK firmware
+2. **Firmware provenance.** The root repository ships H753ZI and H7S78-DK firmware
    binaries but does not include their source, build recipe or explicit
    redistribution information. Record where they came from and the intended
    release terms, or choose a separate reproducible example.
-4. **History contents.** The removed Vim swap remains in the original root
+3. **History contents.** The removed Vim swap remains in the original root
    history. It contains workstation metadata and recovered script text.
    Decide whether to retain that history or prepare a separate cleaned release
    history. No history rewriting has been performed.
@@ -46,8 +44,10 @@ access-key formats; it found no matches. This is not a comprehensive secret revi
 does not cover the histories of the two emulator forks.
 
 The forks retain QEMU license files and upstream source notices. The
-`symcc_fuzzing_helper` manifest identifies GPL-3.0-or-later. This preparation
-does not replace those notices or assign a license to the firmware.
+`symcc_fuzzing_helper` manifest identifies GPL-3.0-or-later. The superproject's
+original material now uses GPL-3.0-only, as selected for this release;
+[LICENSING.md](../LICENSING.md) describes its scope. This does not replace
+upstream notices or assign a license to the firmware.
 
 Before publication, review the forks' contributed files/history and all bundled
 artifacts, settle the decisions above, and then verify an anonymous clone and

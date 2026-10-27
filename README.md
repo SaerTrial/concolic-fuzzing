@@ -203,10 +203,12 @@ coordination policies remain future work.
 
 ## Attribution and licensing
 
+The original scripts, tests, configurations and documentation in this
+superproject are licensed under **GPL-3.0-only**. See [LICENSE](LICENSE) for the
+full text and [LICENSING.md](LICENSING.md) for scope and exclusions.
+
 This work builds on QEMU, AFL/Triforce integration, SymQEMU, SymCC and the Qsym
-backend. Preserve their existing license and attribution files. The root
-repository currently has no declared license for its original scripts and
-documentation, and the bundled firmware has no accompanying source/build recipe
-or explicit redistribution statement. These publication decisions are tracked in
-[release readiness](docs/release-readiness.md); no license for those files is
-implied by this README.
+backend. Their existing licenses and attribution files continue to apply.
+The bundled firmware binaries are excluded from the root license grant;
+their source/build recipe and redistribution information remain to be recorded
+in [release readiness](docs/release-readiness.md).

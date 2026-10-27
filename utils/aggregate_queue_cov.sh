@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2025-2026 Zhanpeng Huang
+# SPDX-License-Identifier: GPL-3.0-only
+# See LICENSE and LICENSING.md in the repository root.
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <queue_folder> <binary_conf>"

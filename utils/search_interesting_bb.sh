@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2025-2026 Zhanpeng Huang
+# SPDX-License-Identifier: GPL-3.0-only
+# See LICENSE and LICENSING.md in the repository root.
 echo "================================================="
 echo "			search interesting BBs		"
 echo "================================================="
