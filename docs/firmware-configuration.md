@@ -246,7 +246,7 @@ lookup, but it must be **present** and **nonempty** for the current lookup to tr
 ```
 
 triforce-qemu's panic helper exits with code 32; its custom forkserver forwards a
-shifted child status to AFL. Concolic-replay logs the panic and exits with code
+shifted child status to AFL. concolic-executor logs the panic and exits with code
 1. Check the panic log and confirm AFL actually records a known crashing input;
 the replay exit code alone is not a crash oracle.
 
