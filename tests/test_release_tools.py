@@ -105,7 +105,7 @@ class BatchRunnerTests(unittest.TestCase):
             if seed:
                 (root / "inputs/seed").write_bytes(b"A")
             (root / "config.json").write_text("{}")
-            for emulator, address in (("TriforceQEMU", left), ("concolic-replay", right)):
+            for emulator, address in (("triforce-qemu", left), ("concolic-executor", right)):
                 binary = root / emulator / "build/qemu-system-arm"
                 binary.parent.mkdir(parents=True)
                 binary.write_text(

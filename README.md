@@ -1,5 +1,5 @@
 # Concolic Fuzzing
-This repo sets up fuzzer and concolic executor for concolic fuzzing. Basically, it compiles TriforceQEMU and full system SymQEMU (concolic-replay). TriforceQEMU is another project that implements full system fuzzing with the help of rehosting. This setup only supports Linux machine. For a MCU firmware, assume that inputs come from MMIO regions or a socket interface for example, such that we could symbolize a receiving value from any of them to propagate collected constraints through execution and finally let a SMT solver obtain values, that allow an execution to this path.
+This repo sets up fuzzer and concolic executor for concolic fuzzing. Basically, it compiles triforce-qemu and full system SymQEMU (concolic-executor). triforce-qemu is another project that implements full system fuzzing with the help of rehosting. This setup only supports Linux machine. For a MCU firmware, assume that inputs come from MMIO regions or a socket interface for example, such that we could symbolize a receiving value from any of them to propagate collected constraints through execution and finally let a SMT solver obtain values, that allow an execution to this path.
 
 # Environment Setup
 Install the following for QEMU compile.
@@ -16,7 +16,7 @@ Install Rust cargo
 curl https://sh.rustup.rs -sSf | sh
 ```
 
-Then run `./build_fuzzer_and_concolic_executor.sh` to build TriforceQEMU, concolic-replay, AFL++4.34.
+Then run `./build_fuzzer_and_concolic_executor.sh` to build triforce-qemu, concolic-executor, AFL++4.34.
 
 # Run a test fuzzing
 
@@ -32,7 +32,7 @@ perl -E 'say "A" x 80' > AFLplusplus/input/input1
   -o ./AFLplusplus/output                                \
   -t 2000                                                \
   --                                                     \
-  ./TriforceQEMU/build/qemu-system-arm                   \
+  ./triforce-qemu/build/qemu-system-arm                   \
   -M rehost-fuzzing                                      \
   -display none                                          \
   -kernel ./fw-example/nucleo753zi/aflConfiguration.json \
@@ -44,10 +44,10 @@ Run afl fuzzing helper that leverages concolic executor to guide fuzzing progres
 symcc_fuzzing_helper                                    \
  -v -o ./AFLplusplus/output                             \
  -a fuzzer01 -n symqemu                                 \
- -- ./concolic-replay/build/qemu-system-arm             \
+ -- ./concolic-executor/build/qemu-system-arm             \
  -M concolic-execution                                  \
  -display none                                          \
- -kernel ./TriforceQEMU/patches/fw-example/nucleo753zi/aflConfiguration.json                                                   \
+ -kernel ./triforce-qemu/patches/fw-example/nucleo753zi/aflConfiguration.json                                                   \
   -replayFile @@
 ```
 
@@ -55,7 +55,7 @@ symcc_fuzzing_helper                                    \
 # Example
 
 The image shows a fuzzer as a main instance running in parallel mode and scanning queue folders of other instances in the meanwhile.
-![TriforceQEMU+AFL](./imgs/TriforceQEMU.png)
+![triforce-qemu+AFL](./imgs/triforce-qemu.png)
 
 
 The symcc fuzzing helper watches new test cases of the main instance, and pick the most promising testcase for concolic exploration. It generates new testcase by following AFL testcase naming convention, which are taken advantage of when deemed interesting by the main instance fuzzer.
@@ -72,7 +72,7 @@ CPU state, choose MMIO or PC-based symbolization, add hooks and stop conditions,
 schedule interrupts, and validate both engines before fuzzing.
 
 Both engines accept a shared JSON file through `-kernel`, with some differences:
-`symbolize_at_pc` affects only concolic-replay, and `aflDmesgAddr` currently has no
+`symbolize_at_pc` affects only concolic-executor, and `aflDmesgAddr` currently has no
 active logging effect. The tutorial documents these details and includes a
 complete configuration and commands for replay, AFL, and the concolic helper.
 
@@ -82,7 +82,7 @@ complete configuration and commands for replay, AFL, and the concolic helper.
 Export observed address ranges as EZCOV coverage:
 
 ```sh
-./TriforceQEMU/build/qemu-system-arm \
+./triforce-qemu/build/qemu-system-arm \
   -M rehost-fuzzing -display none \
   -kernel runs/nucleo753zi.json -aflFile runs/input/seed \
   -covFile runs/seed.ezcov
@@ -110,7 +110,7 @@ same firmware image and address mapping in Ghidra and the emulator.
 # Utility
 * `utils/aggregate_queue_cov.sh`: make a cumulative code coverage;
 * `utils/search_interesting_bb.sh`: look for interesting basic blocks, e.g., `search_interesting_bb.sh queue_folder bb1, bb2, bb3…` ;
-* `test_same_exec_flows_over_testset.sh` and `utils/single_compare_test_case.sh`: compare whether execution flows between TriforceQEMU and concolic-replay are the same under a test case or a test set;
+* `test_same_exec_flows_over_testset.sh` and `utils/single_compare_test_case.sh`: compare whether execution flows between triforce-qemu and concolic-executor are the same under a test case or a test set;
 
 
 

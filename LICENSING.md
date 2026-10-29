@@ -16,9 +16,9 @@ The superproject's license does not replace the terms of third-party components:
 
 | Component | Where to find its terms |
 | --- | --- |
-| `TriforceQEMU/` | Its `LICENSE`, `COPYING`, `COPYING.LIB` and per-file notices. QEMU includes files with different licenses. |
-| `concolic-replay/` | Its `LICENSE`, `COPYING`, `COPYING.LIB` and per-file notices. |
-| `concolic-replay/symcc_fuzzing_helper/` | Existing SymCC notices and the manifest's `GPL-3.0-or-later` declaration. |
+| `triforce-qemu/` | Its `LICENSE`, `COPYING`, `COPYING.LIB` and per-file notices. QEMU includes files with different licenses. |
+| `concolic-executor/` | Its `LICENSE`, `COPYING`, `COPYING.LIB` and per-file notices. |
+| `concolic-executor/symcc_fuzzing_helper/` | Existing SymCC notices and the manifest's `GPL-3.0-or-later` declaration. |
 | Downloaded AFL++, SymCC runtime, Qsym and build dependencies | Their own license and copyright notices. |
 
 Preserve those notices when distributing the corresponding components. The root

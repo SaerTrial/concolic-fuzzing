@@ -10,7 +10,7 @@ if [[ $# -ne 2 || ! -d $1 || ! -f $2 ]]; then
     exit 2
 fi
 command -v timeout >/dev/null || { echo "Error: GNU timeout is required." >&2; exit 2; }
-for emulator in TriforceQEMU concolic-replay; do
+for emulator in triforce-qemu concolic-executor; do
     test -x "$ROOT/$emulator/build/qemu-system-arm" || {
         echo "Error: build $emulator first." >&2
         exit 2
@@ -39,7 +39,7 @@ for input in "${inputs[@]}"; do
     mkdir -p "$CASE/solver"
     printf '%s\n' "$input" > "$CASE/input-path.txt"
     if ! timeout -k 5 "${TRACE_TIMEOUT_SECONDS:-30}" \
-        "$ROOT/TriforceQEMU/build/qemu-system-arm" \
+        "$ROOT/triforce-qemu/build/qemu-system-arm" \
         -M rehost-fuzzing -display none -kernel "$2" -aflFile "$input" \
         -D "$CASE/fuzzer.log" -d afl_fuzzing_log > "$CASE/fuzzer.stdout" 2> "$CASE/fuzzer.stderr"; then
         echo "Error: fuzzer execution failed or timed out for $input" >&2
@@ -48,7 +48,7 @@ for input in "${inputs[@]}"; do
     fi
     if ! SYMCC_OUTPUT_DIR="$CASE/solver" SYMCC_MEMORY_INPUT=1 \
         timeout -k 5 "${TRACE_TIMEOUT_SECONDS:-30}" \
-        "$ROOT/concolic-replay/build/qemu-system-arm" \
+        "$ROOT/concolic-executor/build/qemu-system-arm" \
         -M concolic-execution -display none -kernel "$2" -replayFile "$input" \
         -D "$CASE/concolic.log" -d concolic_replay > "$CASE/concolic.stdout" 2> "$CASE/concolic.stderr"; then
         echo "Error: concolic execution failed or timed out for $input" >&2

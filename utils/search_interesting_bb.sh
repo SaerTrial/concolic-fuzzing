@@ -31,7 +31,7 @@ if [ ! -f "${2}" ]; then
 fi
 
 
-if [ ! -f "./TriforceQEMU/build/qemu-system-arm" ]; then
+if [ ! -f "./triforce-qemu/build/qemu-system-arm" ]; then
         echo "[-] qemu-system-arm does not exist!. Compile first or check if it stays in the same folder as script"
         exit 1;
 fi
@@ -54,7 +54,7 @@ for cur_input in "${1}"/*; do
         	"$(printf '#%.0s' $(seq 1 $bar_len))" \
         	"$percent" "$count" "$total"
 
-	"./TriforceQEMU/build/qemu-system-arm" -M rehost-fuzzing -display none -kernel "$2" -aflFile "$cur_input" -D qemu.log -d afl_fuzzing_log &>/dev/null
+	"./triforce-qemu/build/qemu-system-arm" -M rehost-fuzzing -display none -kernel "$2" -aflFile "$cur_input" -D qemu.log -d afl_fuzzing_log &>/dev/null
 
 	for bb in "${bbs[@]}"; do
 		if grep -q "$bb" "qemu.log"; then

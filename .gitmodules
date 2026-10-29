@@ -1,6 +1,6 @@
-[submodule "concolic-replay"]
-	path = concolic-replay
-	url = https://github.com/SaerTrial/concolic-replay.git
-[submodule "TriforceQEMU"]
-	path = TriforceQEMU
-	url = https://github.com/SaerTrial/TriforceQEMU.git
+[submodule "concolic-executor"]
+	path = concolic-executor
+	url = https://github.com/SaerTrial/concolic-executor.git
+[submodule "triforce-qemu"]
+	path = triforce-qemu
+	url = https://github.com/SaerTrial/triforce-qemu.git

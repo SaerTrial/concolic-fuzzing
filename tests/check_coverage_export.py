@@ -30,8 +30,8 @@ def main():
     )
     cases = {"a81": b"A" * 80 + b"\n", "zero81": bytes(81), "sequence80": bytes(range(80))}
     engines = (
-        ("TriforceQEMU", "rehost-fuzzing", "-aflFile", "afl_fuzzing_log"),
-        ("concolic-replay", "concolic-execution", "-replayFile", "concolic_replay"),
+        ("triforce-qemu", "rehost-fuzzing", "-aflFile", "afl_fuzzing_log"),
+        ("concolic-executor", "concolic-execution", "-replayFile", "concolic_replay"),
     )
     results = []
     for name, data in cases.items():

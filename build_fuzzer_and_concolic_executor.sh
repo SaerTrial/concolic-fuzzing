@@ -20,10 +20,10 @@ for tool in git make ninja cmake python3 cargo pkg-config cc c++; do
 done
 
 # Keep the emulators at the revisions recorded by the superproject.
-git submodule update --init TriforceQEMU concolic-replay
-git -C concolic-replay submodule update --init subprojects/symcc-rt
+git submodule update --init triforce-qemu concolic-executor
+git -C concolic-executor submodule update --init subprojects/symcc-rt
 # The Qsym backend links system Z3; its third_party/z3 checkout is not needed.
-git -C concolic-replay/subprojects/symcc-rt submodule update --init src/backends/qsym/qsym
+git -C concolic-executor/subprojects/symcc-rt submodule update --init src/backends/qsym/qsym
 
 # Pin both the release name and its commit.
 AFL_REV=474ff18ba2a7999a518a4d194fcd5a1f87c3625d
@@ -45,7 +45,7 @@ make -C AFLplusplus -j "${JOBS:-4}" afl-fuzz afl-showmap
 test -x AFLplusplus/afl-fuzz
 test -x AFLplusplus/afl-showmap
 
-for emulator in TriforceQEMU concolic-replay; do
+for emulator in triforce-qemu concolic-executor; do
     echo "Building $emulator..."
     (
         mkdir -p "$emulator/build"
@@ -65,6 +65,6 @@ for emulator in TriforceQEMU concolic-replay; do
 done
 
 # Install locally so the README does not depend on a particular shell PATH.
-cargo install --locked --path concolic-replay/symcc_fuzzing_helper --root "$ROOT/build/tools"
+cargo install --locked --path concolic-executor/symcc_fuzzing_helper --root "$ROOT/build/tools"
 test -x build/tools/bin/symcc_fuzzing_helper
 echo "Build complete. Follow README.md to prepare a configuration and start both processes."

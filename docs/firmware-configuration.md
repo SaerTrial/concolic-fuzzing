@@ -13,8 +13,8 @@ and its matching ELF. The addresses below belong to that binary.
 
 ```mermaid
 flowchart LR
-    J[Configuration JSON] --> F[TriforceQEMU]
-    J --> C[concolic-replay]
+    J[Configuration JSON] --> F[triforce-qemu]
+    J --> C[concolic-executor]
     B[Firmware binary] --> F
     B --> C
     A[AFL++ mutations] --> F
@@ -26,8 +26,8 @@ flowchart LR
     H --> Q
 ```
 
-TriforceQEMU reports coverage to AFL++ for guiding input mutation. The helper selects queued inputs for
-concolic-replay, which tracks symbolic values and asks its solver for candidate
+triforce-qemu reports coverage to AFL++ for guiding input mutation. The helper selects queued inputs for
+concolic-executor, which tracks symbolic values and asks its solver for candidate
 inputs. The helper feeds candidates back into the fuzzing workflow. This is the
 intended feedback loop; useful coverage gains still need to be measured.
 
@@ -106,7 +106,7 @@ shown in disassembly.
 Starting at the reset handler lets the firmware establish SP, copy `.data`,
 clear `.bss`, and initialize its runtime. Jumping directly into `main` or a parser
 requires you to supply everything that skipped startup would have established.
-In TriforceQEMU, `entry_address` also sets the AFL forkserver entry marker; verify
+In triforce-qemu, `entry_address` also sets the AFL forkserver entry marker; verify
 that execution reaches it.
 
 `init_state` optionally writes general registers after CPU creation:
@@ -172,7 +172,7 @@ Disassembling around that address explains why:
 On a successful receive, the program loads one byte from its stack and compares
 it with `'s'`. The configured address is the load instruction's PC, not the
 stack address and not the UART data-register address. This focuses symbolic
-tracking on a value used by the application. TriforceQEMU ignores this key.
+tracking on a value used by the application. triforce-qemu ignores this key.
 
 ## 6. Choose hooks, normal stops, and crashes
 
@@ -217,9 +217,9 @@ function also gets no automatic return value; model R0 and other side effects
 when its callers depend on them.
 
 To add a callback, implement and register it in both
-[`TriforceQEMU/hw/rehosting/arm/function_hooks.c`](../TriforceQEMU/hw/rehosting/arm/function_hooks.c)
+[`triforce-qemu/hw/rehosting/arm/function_hooks.c`](../triforce-qemu/hw/rehosting/arm/function_hooks.c)
 and
-[`concolic-replay/hw/concolic/arm/function_hooks.c`](../concolic-replay/hw/concolic/arm/function_hooks.c),
+[`concolic-executor/hw/concolic/arm/function_hooks.c`](../concolic-executor/hw/concolic/arm/function_hooks.c),
 then rebuild both engines. The JSON chooses a compiled hook; it cannot contain
 Python or C code. Prefer function-entry addresses, where LR has the expected
 return address, and keep behavior consistent across engines.
@@ -245,7 +245,7 @@ lookup, but it must be **present** and **nonempty** for the current lookup to tr
 0x080021ea: b 0x080021ea
 ```
 
-TriforceQEMU's panic helper exits with code 32; its custom forkserver forwards a
+triforce-qemu's panic helper exits with code 32; its custom forkserver forwards a
 shifted child status to AFL. Concolic-replay logs the panic and exits with code
 1. Check the panic log and confirm AFL actually records a known crashing input;
 the replay exit code alone is not a crash oracle.
@@ -255,8 +255,8 @@ function entry or loop target is a better choice than an arbitrary instruction
 in the middle of a block. Confirm the address appears as an executed block
 entry in the trace.
 
-The example also contains `aflDmesgAddr`. TriforceQEMU parses it, but its logging
-interception call is commented out; concolic-replay does not parse it. It is not
+The example also contains `aflDmesgAddr`. triforce-qemu parses it, but its logging
+interception call is commented out; concolic-executor does not parse it. It is not
 needed for a new configuration, and setting it does not enable firmware logs.
 
 ## 7. Set up the interrupt firing strategy
@@ -346,7 +346,7 @@ directory:
   -i runs/stm32h7s78/input \
   -o runs/stm32h7s78/afl-output \
   -t 2000 -- \
-  ./TriforceQEMU/build/qemu-system-arm \
+  ./triforce-qemu/build/qemu-system-arm \
   -M rehost-fuzzing -display none \
   -kernel runs/stm32h7s78/aflConfiguration.json \
   -aflFile @@
@@ -358,7 +358,7 @@ In a second terminal, from the same repository root:
 ./build/tools/bin/symcc_fuzzing_helper \
   -v -o runs/stm32h7s78/afl-output \
   -a fuzzer01 -n symqemu -- \
-  ./concolic-replay/build/qemu-system-arm \
+  ./concolic-executor/build/qemu-system-arm \
   -M concolic-execution -display none \
   -kernel runs/stm32h7s78/aflConfiguration.json \
   -replayFile @@
