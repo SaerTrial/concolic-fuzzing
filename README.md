@@ -1,5 +1,5 @@
-# Concolic Fuzzing on MMIO 
-This repo sets up fuzzer and concolic executor for concolic fuzzing. Basically, it compiles TriforceQEMU and full system SymQEMU (concolic-replay). TriforceQEMU is another project that implements full system fuzzing with the help of rehosting. This setup only supports Linux machine. 
+# Concolic Fuzzing
+This repo sets up fuzzer and concolic executor for concolic fuzzing. Basically, it compiles TriforceQEMU and full system SymQEMU (concolic-replay). TriforceQEMU is another project that implements full system fuzzing with the help of rehosting. This setup only supports Linux machine. For a MCU firmware, assume that inputs come from MMIO regions or a socket interface for example, such that we could symbolize a receiving value from any of them to propagate collected constraints through execution and finally let a SMT solver obtain values, that allow an execution to this path.
 
 # Environment Setup
 Install the following for QEMU compile.
