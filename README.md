@@ -47,7 +47,7 @@ symcc_fuzzing_helper                                    \
  -- ./concolic-executor/build/qemu-system-arm             \
  -M concolic-execution                                  \
  -display none                                          \
- -kernel ./triforce-qemu/patches/fw-example/nucleo753zi/aflConfiguration.json                                                   \
+ -kernel ./fw-example/nucleo753zi/aflConfiguration.json    \
   -replayFile @@
 ```
 
