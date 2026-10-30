@@ -102,6 +102,7 @@ If you want to see a colorful coverage in Ghidra, export observed address ranges
 -M rehost-fuzzing -display none   \
 -kernel ./fw-example/nucleo753zi/aflConfiguration.json \
 -aflFile ./AFLplusplus/output/fuzzer01/crashes/id:000000,sig:06,sync:symqemu,src:000423   \
+-covFile crash.ezcov
 ```
 
 Open the matching `fw-example/nucleo753zi/nucleo-h753zi-RnR.elf` in Ghidra,
