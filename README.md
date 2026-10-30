@@ -142,11 +142,12 @@ complete configuration and commands for replay, AFL, and the concolic helper.
 # Work in Progress
 
 * Porting to RH850
-* More coordination strategies between fuzzer and concolic executor
+* ~~More coordination strategies between fuzzer and concolic executor~~
+  * Have found that the current coordination strategy works properly, but the bottleneck is that concolic execution usually gets limited by input exhaustion from peripheral polling like UART's data presence waiting; 
 * More firmset under test (fuzzware, P2IM)
 * Benchmarking pure AFL++ in hybrid mode and the one with concolic execution in use
 * A verifier for symbolic constraint propagation
-
+* Establish a intermediate layer from C to Python/DSL to easily write a hook func
 
 ## Attribution and licensing
 
