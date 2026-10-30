@@ -18,12 +18,18 @@ curl https://sh.rustup.rs -sSf | sh
 
 Then run `./build_fuzzer_and_concolic_executor.sh` to build triforce-qemu, concolic-executor, AFL++4.34.
 
+After building, add `symcc_fuzzing_helper` to your `PATH` for future Bash or Zsh terminals:
+```sh
+./setup_env.sh
+```
+
+
 # Run a test fuzzing
 
 Run the fuzzer first.
 ``` 
-mkdir ./AFLplusplus/input
-mkdir ./AFLplusplus/output
+mkdir -p ./AFLplusplus/input
+mkdir -p ./AFLplusplus/output
 perl -E 'say "A" x 80' > AFLplusplus/input/input1
 
 ./AFLplusplus/afl-fuzz                                   \
@@ -62,6 +68,52 @@ The symcc fuzzing helper watches new test cases of the main instance, and pick t
 ![Symcc fuzzing helper with full system concolic executor](./imgs/symcc_fuzzing_helper.png)
 
 
+## Reproduce A Crash Case
+
+```bash
+./triforce-qemu/build/qemu-system-arm   \
+-M rehost-fuzzing -display none   \
+-kernel ./fw-example/nucleo753zi/aflConfiguration.json \
+-aflFile ./AFLplusplus/output/fuzzer01/crashes/id:000000,sig:06,sync:symqemu,src:000423   \
+```
+
+You will see in the terminal:
+```
+[delay_hook_0]
+Unassigned mem write 0000000040004820 = 0x8
+Unassigned mem write 0000000040004800 = 0x62626242
+Unassigned mem write 0000000040004808 = 0x413e3e3e
+Unassigned mem write 0000000040004808 = 0x62836262
+Unassigned mem write 0000000040004808 = 0xb4b4d3b4
+Unassigned mem write 0000000040004808 = 0xb4b4b4b4
+Unassigned mem write 0000000040004808 = 0x62626262
+Unassigned mem write 0000000061616161 = 0x2
+Aborted
+```
+where a out-of-bound memory access takes place, being recorded via logging.
+
+
+## Visualizing coverage in Ghidra Cartographer
+
+If you want to see a colorful coverage in Ghidra, export observed address ranges as EZCOV coverage:
+
+```bash
+./triforce-qemu/build/qemu-system-arm   \
+-M rehost-fuzzing -display none   \
+-kernel ./fw-example/nucleo753zi/aflConfiguration.json \
+-aflFile ./AFLplusplus/output/fuzzer01/crashes/id:000000,sig:06,sync:symqemu,src:000423   \
+```
+
+Open the matching `fw-example/nucleo753zi/nucleo-h753zi-RnR.elf` in Ghidra,
+with [Cartographer](https://github.com/nccgroup/Cartographer) installed. Select
+**Tools → Code Coverage → Load Code Coverage File(s)** and load the EZCOV file.
+**Window → Code Coverage** opens the function coverage table; the Listing,
+Decompiler and Function Graph can show the executed regions.
+
+![Cartographer coverage highlights in the Ghidra Listing and Decompiler for the NUCLEO-H753ZI firmware](imgs/ghidra-coverage.png)
+
+
+
 
 # Firmware Configuration
 
@@ -77,35 +129,7 @@ active logging effect. The tutorial documents these details and includes a
 complete configuration and commands for replay, AFL, and the concolic helper.
 
 
-## Visualizing coverage in Ghidra Cartographer
 
-Export observed address ranges as EZCOV coverage:
-
-```sh
-./triforce-qemu/build/qemu-system-arm \
-  -M rehost-fuzzing -display none \
-  -kernel runs/nucleo753zi.json -aflFile runs/input/seed \
-  -covFile runs/seed.ezcov
-```
-
-Open the matching `fw-example/nucleo753zi/nucleo-h753zi-RnR.elf` in Ghidra,
-with [Cartographer](https://github.com/nccgroup/Cartographer) installed. Select
-**Tools → Code Coverage → Load Code Coverage File(s)** and load the EZCOV file.
-**Window → Code Coverage** opens the function coverage table; the Listing,
-Decompiler and Function Graph can show the executed regions.
-
-![Cartographer coverage highlights in the Ghidra Listing and Decompiler for the NUCLEO-H753ZI firmware](imgs/ghidra-coverage.png)
-
-*A view from this project: Cartographer highlights loaded coverage ranges in the
-disassembly and decompiled C. This illustration is separate from the runs in
-the [validation record](docs/validation.md).*
-
-The overlay describes the ranges in the loaded file. The current exporter does
-not include every block-entry PC observed in the execution log; see
-[the export checks](docs/validation.md#coverage-export). An uncolored region is
-therefore not proof that execution never reached it. The overlay also does not
-measure physical-device coverage or prove a hybrid-fuzzing advantage. Use the
-same firmware image and address mapping in Ghidra and the emulator.
 
 # Utility
 * `utils/aggregate_queue_cov.sh`: make a cumulative code coverage;
