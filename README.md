@@ -120,6 +120,7 @@ same firmware image and address mapping in Ghidra and the emulator.
 * More coordination strategies between fuzzer and concolic executor
 * More firmset under test (fuzzware, P2IM)
 * Benchmarking pure AFL++ in hybrid mode and the one with concolic execution in use
+* A verifier for symbolic constraint propagation
 
 
 ## Attribution and licensing
