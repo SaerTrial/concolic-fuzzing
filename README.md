@@ -18,6 +18,10 @@ curl https://sh.rustup.rs -sSf | sh
 
 Then run `./build_fuzzer_and_concolic_executor.sh` to build triforce-qemu, concolic-executor, AFL++4.34.
 
+Both QEMU forks compile the same versioned hook sources. The build initializes
+their nested `hooks` submodules and checks that their revisions match. See
+[shared firmware hooks](docs/shared-hooks.md) for the adapter interface and update workflow.
+
 After building, add `symcc_fuzzing_helper` to your `PATH` for future Bash or Zsh terminals:
 ```sh
 ./setup_env.sh

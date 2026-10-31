@@ -18,6 +18,7 @@ The superproject's license does not replace the terms of third-party components:
 | --- | --- |
 | `triforce-qemu/` | Its `LICENSE`, `COPYING`, `COPYING.LIB` and per-file notices. QEMU includes files with different licenses. |
 | `concolic-executor/` | Its `LICENSE`, `COPYING`, `COPYING.LIB` and per-file notices. |
+| Each emulator's `hooks/` submodule | Shared firmware hooks retain `GPL-2.0-or-later`; see their `README.md`, `COPYING` and source notices. |
 | `concolic-executor/symcc_fuzzing_helper/` | Existing SymCC notices and the manifest's `GPL-3.0-or-later` declaration. |
 | Downloaded AFL++, SymCC runtime, Qsym and build dependencies | Their own license and copyright notices. |
 
