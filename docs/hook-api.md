@@ -185,8 +185,8 @@ The code is split so that only five small calls differ between the engines:
 | Hooks | `hooks/hooks.c` | once | What the firmware function should do. |
 | API | `hooks/hook_api.h` | once | The calls in section 3. |
 | Core | `hooks/core.c` | once | Configuration, dispatch, copies into guest memory. |
-| ABI | `hooks/arm/abi.c` | once per architecture | Where arguments, return value and return address live. |
-| Port | `hw/<engine>/hook_port.c` | once per engine | Input tape and symbolic bookkeeping. |
+| ABI | `hooks/arm/abi.c` | once per architecture | Where registers, arguments, return value and return address live. |
+| Port | `hw/<engine>/hook_port.c` | once per engine | Input tape and symbolic bookkeeping, with no architecture code. |
 
 Everything in `hooks/` is one repository, checked out as the `hooks` submodule
 of both QEMU forks. Here is the path of one `uart_recv` call:
@@ -202,7 +202,8 @@ firmware: bl HAL_UART_Receive -> a new translation block starts at 0x08004d50
   core.c              copy into guest RAM, one page at a time
   port                hook_port_mem_input(host, 1, offset)
                         fuzzer: nothing    concolic: host byte = input[offset]
-  abi.c             hook_set_ret(cs, 0): r0 = 0, r0 has no symbolic value now
+  abi.c             hook_set_ret(cs, 0): r0 = 0
+  port                hook_port_reg_concrete(cs, &env->regs[0]): r0 has no symbolic value now
   abi.c         hook_arch_return: pc = lr & ~1
 translate.c     returns 1, and the block jumps to the new pc
 ```
@@ -216,6 +217,11 @@ The port, per engine:
 | `hook_port_mem_concrete` | nothing | clear the bytes' symbolic values |
 | `hook_port_reg_concrete` | nothing | clear the register's symbolic value |
 | `hook_port_log` | `LOG_AFL` | `LOG_CONCOLIC_REPLAY` |
+
+The port never names a register. `abi.c` passes a pointer into the CPU state,
+such as `&env->regs[0]` for r0. The concolic port finds the TCG global stored
+at that place and clears the expression slot that SymQEMU keeps next to it. So
+a new architecture needs only a new `hooks/<arch>/abi.c`; neither port changes.
 
 MMIO reads follow the same rule: the concolic executor names them
 `input[cursor]`, `input[cursor + 1]`, …, so hook input and MMIO input mix
