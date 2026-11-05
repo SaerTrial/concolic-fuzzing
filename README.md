@@ -139,8 +139,7 @@ derive addresses from the ELF, prepare a raw flash image, configure memory and
 CPU state, feed input through MMIO or hooked driver functions, add hooks and
 stop conditions, schedule interrupts, and validate both engines before fuzzing.
 
-Both engines accept a shared JSON file through `-kernel`; `aflDmesgAddr`
-currently has no active logging effect. The tutorial documents these details and
+Both engines accept a shared JSON file through `-kernel`; The tutorial documents these details and
 includes a complete configuration and commands for replay, AFL, and the concolic
 helper.
 
