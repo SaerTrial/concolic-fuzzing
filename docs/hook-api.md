@@ -83,8 +83,9 @@ even though the real key came from byte 1664 or later.
 The solver did its job: "make `input[0]` be `'s'`". It wrote the 1-byte file
 `s`. The fuzzer then gave that `'s'` to the **first clock register read** during
 startup, and the key was untouched. In the same test, none of the 9 inputs it
-generated reached the `'s'` branch. `symbolize_at_pc` has been removed, and a
-configuration that still uses it stops at startup.
+generated reached the `'s'` branch. `symbolize_at_pc` has been removed. If your
+configuration file still has a `symbolize_at_pc` entry, both engines print an
+error and exit before running the firmware.
 
 ## 3. Writing a hook
 

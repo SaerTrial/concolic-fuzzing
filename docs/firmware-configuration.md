@@ -173,10 +173,11 @@ file, so a byte the solver changes reaches the same place when the fuzzer runs
 the new input. Nothing needs to be configured. The executor requires
 `SYMCC_MEMORY_INPUT=1`, which `symcc_fuzzing_helper` sets.
 
-The older `symbolize_at_pc` key has been removed, and a configuration that
-still contains it stops at startup. It made memory symbolic without consuming
-input, so solved bytes landed at the wrong input positions. Hook the function
-that receives the input instead. [Firmware hooks](hook-api.md) explains why.
+The older `symbolize_at_pc` key has been removed. If your configuration file
+still has a `symbolize_at_pc` entry, both engines print an error and exit before
+running the firmware. The key made memory symbolic without consuming input, so
+solved bytes landed at the wrong input positions. Hook the function that
+receives the input instead. [Firmware hooks](hook-api.md) explains why.
 
 ## 6. Choose hooks, normal stops, and crashes
 
