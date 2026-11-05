@@ -165,7 +165,6 @@ both engines.
 * More firmset under test (fuzzware, P2IM)
 * Benchmarking pure AFL++ in hybrid mode and the one with concolic execution in use
 * A verifier for symbolic constraint propagation
-* Establish a intermediate layer from C to Python/DSL to easily write a hook func
 
 ## Attribution and licensing
 
