@@ -79,7 +79,7 @@ The symcc fuzzing helper watches new test cases of the main instance, and pick t
 
 You will see in the terminal:
 ```
-[delay_hook_0]
+[HAL_Delay_0]
 Unassigned mem write 0000000040004820 = 0x8
 Unassigned mem write 0000000040004800 = 0x62626242
 Unassigned mem write 0000000040004808 = 0x413e3e3e
@@ -121,13 +121,17 @@ Decompiler and Function Graph can show the executed regions.
 Read [Writing a firmware configuration from scratch](docs/firmware-configuration.md)
 for a step-by-step walkthrough of the STM32H7S78-DK example. It explains how to
 derive addresses from the ELF, prepare a raw flash image, configure memory and
-CPU state, choose MMIO or PC-based symbolization, add hooks and stop conditions,
-schedule interrupts, and validate both engines before fuzzing.
+CPU state, feed input through MMIO or hooked driver functions, add hooks and
+stop conditions, schedule interrupts, and validate both engines before fuzzing.
 
-Both engines accept a shared JSON file through `-kernel`, with some differences:
-`symbolize_at_pc` affects only concolic-executor, and `aflDmesgAddr` currently has no
-active logging effect. The tutorial documents these details and includes a
-complete configuration and commands for replay, AFL, and the concolic helper.
+Both engines accept a shared JSON file through `-kernel`; `aflDmesgAddr`
+currently has no active logging effect. The tutorial documents these details and
+includes a complete configuration and commands for replay, AFL, and the concolic
+helper.
+
+[Firmware hooks](docs/hook-api.md) explains how to write a hook, such as one that
+feeds input into a UART receive buffer. Each hook is written once and runs in
+both engines.
 
 
 

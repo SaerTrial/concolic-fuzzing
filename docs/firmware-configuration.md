@@ -99,9 +99,9 @@ The current machine definitions list `cortex-m7` as their valid CPU type. A new
 architecture or board model may require code changes beyond JSON.
 
 The loader sets PC to `entry_address & ~1` and Thumb state from bit 0. For this
-Cortex-M image, use the odd reset-vector value `0x080024cd`. For `patch`,
-`exit_at`, `aflPanicAddr`, and `symbolize_at_pc`, use the even instruction address
-shown in disassembly.
+Cortex-M image, use the odd reset-vector value `0x080024cd`. For `exit_at` and
+`aflPanicAddr`, use the even instruction address shown in disassembly. `patch`
+clears bit 0 itself, so an odd Thumb symbol value works there too.
 
 Starting at the reset handler lets the firmware establish SP, copy `.data`,
 clear `.bss`, and initialize its runtime. Jumping directly into `main` or a parser
@@ -143,86 +143,103 @@ not restore RAM, VTOR, or other special CPU/peripheral state.
 MMIO is an area where MCU interacts with outside. When there is a mmio range in a config file, it means that all MMIO read would be fed with fuzzing input or custom input, to either exercise firmware logic or reproduce the same software behavior. So, set up a MMIO region according to where your firmware eats input from peripherals. For the concolic executor, it would symbolize all MMIO read in that region, and make it propagate through execution, deriving constraints and solving as concrete values.
 
 
-### Symbolic input in the concolic executor
+### Input through a hooked driver function
 
-There are two choices to symbolize a value off read operations:
-
-| Choice | Configuration | Effect in replay |
-| --- | --- | --- |
-| MMIO symbolization | Configure `mmio`; omit `symbolize_at_pc`. | The configured unassigned MMIO reads receive concrete input bytes and symbolic expressions. |
-| Symbolization at selected PCs | Add a nonempty `symbolize_at_pc` list. | MMIO still supplies concrete input, but its automatic symbolization is disabled. Selected non-MMIO loads make the accessed memory symbolic when it has no expression already. |
-
-The STM32 example uses the second choice:
-
-```json
-{"symbolize_at_pc": ["0x0800041e"]}
-```
-
-Disassembling around that address explains why:
+Sometimes the interesting input arrives through a driver call. The STM32
+example waits for one key press:
 
 ```text
-0x08000414: bl     HAL_UART_Receive
+0x08000414: bl     HAL_UART_Receive      ; (huart, sp + 0xb, 1, 100)
 0x08000418: cbz    r0, 0x0800041e
 ...
-0x0800041e: ldrb.w r0, [sp, #0xb]
-0x08000422: cmp    r0, #0x73
+0x0800041e: ldrb.w r0, [sp, #0xb]        ; the received byte
+0x08000422: cmp    r0, #0x73             ; 's'?
 0x08000424: beq    0x0800043a
 ```
 
-On a successful receive, the program loads one byte from its stack and compares
-it with `'s'`. The configured address is the load instruction's PC, not the
-stack address and not the UART data-register address. This focuses symbolic
-tracking on a value used by the application. triforce-qemu ignores this key.
+Patch the driver with the `uart_recv` hook. It skips `HAL_UART_Receive`, copies
+the next input byte straight into the buffer at `sp + 0xb`, and returns 0
+(`HAL_OK`):
+
+```json
+{"patch": [{"symbol": "HAL_UART_Receive", "hook": "uart_recv"}]}
+```
+
+### Symbolic input in the concolic executor
+
+concolic-executor makes every input byte symbolic where it enters, through MMIO
+reads and hooks alike. Symbolic byte *k* always means byte *k* of the input
+file, so a byte the solver changes reaches the same place when the fuzzer runs
+the new input. Nothing needs to be configured. The executor requires
+`SYMCC_MEMORY_INPUT=1`, which `symcc_fuzzing_helper` sets.
+
+The older `symbolize_at_pc` key has been removed, and a configuration that
+still contains it stops at startup. It made memory symbolic without consuming
+input, so solved bytes landed at the wrong input positions. Hook the function
+that receives the input instead. [Firmware hooks](hook-api.md) explains why.
 
 ## 6. Choose hooks, normal stops, and crashes
 
 ### Bypass functions with `patch`
 
-Each entry uses both fields, with different roles:
+A patch entry says *where* to intercept and *which hook* to run there:
 
-- **`addr` triggers interception.** The runtime checks whether the guest PC at
-  a translation-block entry equals this address.
-- **`name` selects the callback.** It is an exact, case-sensitive key registered
-  in the emulator's `hook_init()`. It does not look up a function name in the
-  firmware or resolve an ELF symbol to an address.
+| Field | Meaning |
+| --- | --- |
+| `addr` | Function entry address. The hook runs when a translation block starts here. |
+| `symbol` | Instead of `addr`: a name looked up in the `symbols` list. |
+| `hook` | Name of a hook compiled into both engines. `name` is accepted as an older spelling. |
+| `ret` | Optional. Return value set after the hook runs, for callers that check it. |
 
 ```json
 {
+  "symbols": "stm32h7s78-dk.syms",
   "patch": [
-    {"addr": "0x08002648", "name": "HAL_Delay"},
-    {"addr": "0x080002c8", "name": "uart_printf"}
+    {"addr": "0x08002648", "hook": "HAL_Delay"},
+    {"addr": "0x080002c8", "hook": "uart_printf"},
+    {"symbol": "HAL_UART_Receive", "hook": "uart_recv"}
   ]
 }
 ```
 
-For the first entry, reaching `0x08002648` retrieves the name `HAL_Delay`, which
-selects the registered C callback `delay_hook()`. The second entry invokes
-`uart_printf()` when execution reaches `0x080002c8`. A registered name alone
-does not trigger a hook if execution never reaches its configured address.
+When execution reaches `0x08002648`, the runtime runs the `HAL_Delay` hook and
+then returns to the caller (PC := LR, with bit 0 cleared in Thumb mode). The
+firmware function's body never runs, and its bytes are not changed.
 
-After calling the callback, the runtime redirects the guest PC to LR, if we work on ARM binary, (clearing
-bit 0 in Thumb mode) bypassing the firmware function's body. This intercepts
-execution at runtime; it does not rewrite the firmware's instruction bytes.
-The supplied callbacks are:
+`symbols` is optional. It names a symbol-list file next to this JSON file (or an
+absolute path), or gives the names inline as `{"HAL_UART_Receive": "0x08004d50"}`.
+The file holds one `address [type] name` per line, which is what `nm` prints:
 
-| Hook name | Behavior |
+```text
+# Lines picked from: arm-none-eabi-nm stm32h7s78-dk.elf
+08002648 W HAL_Delay
+08004d50 T HAL_UART_Receive
+```
+
+For a stripped image, write the same lines from the names you gave functions
+in your disassembler. The list only feeds `symbol` fields, and the firmware
+image itself is never searched.
+
+The supplied hooks are:
+
+| Hook | Behavior |
 | --- | --- |
-| `HAL_Delay` | Logs the call and skips the delay. It does not advance the firmware's tick counter. |
-| `uart_printf` | Reads a format string through R0 and a limited set of arguments through R1–R3, then prints on the host. It is not a complete `printf` implementation. |
+| `stub` | Does nothing, so the function is skipped. Add `ret` when callers use its result. |
+| `HAL_Delay` | Skips the delay. It does not advance the firmware's tick counter. |
+| `uart_recv` | For `(handle, buffer, length, timeout)`: fills the buffer with the next `length` input bytes and returns 0. |
+| `uart_printf` | Reads a format string through R0 and up to three values through R1–R3, then prints on the host. It is not a complete `printf`. |
 
-Provide a nonempty name. An unknown name still skips the function and returns
-to LR, but runs no callback. For example, `"name": "printf"` in the NUCLEO
-configuration does not select the registered `uart_printf` callback. A skipped
-function also gets no automatic return value; model R0 and other side effects
-when its callers depend on them.
+Mistakes stop both engines at startup, before any input is used:
 
-To add a callback, implement and register it in both
-[`triforce-qemu/hw/rehosting/arm/function_hooks.c`](../triforce-qemu/hw/rehosting/arm/function_hooks.c)
-and
-[`concolic-executor/hw/concolic/arm/function_hooks.c`](../concolic-executor/hw/concolic/arm/function_hooks.c),
-then rebuild both engines. The JSON chooses a compiled hook; it cannot contain
-Python or C code. Prefer function-entry addresses, where LR has the expected
-return address, and keep behavior consistent across engines.
+```text
+qemu-system-arm: patch[1]: unknown hook "printf"; registered hooks: HAL_Delay, stub, uart_printf, uart_recv
+qemu-system-arm: patch[2]: symbol "HAL_UART_Recieve" is not in the symbol list
+```
+
+To write a new hook, see [Firmware hooks](hook-api.md). Hooks live in the shared
+`hooks` submodule, so one hook serves both engines. The JSON only chooses a
+compiled hook; it cannot contain code. Prefer function-entry addresses, where
+LR holds the return address.
 
 ### Add stop points to speed up a fuzzing campaign
 
@@ -286,8 +303,9 @@ validated.
 
 ## 8. Assemble the complete configuration
 
-Save this as `runs/stm32h7s78/aflConfiguration.json`, beside the extracted binary.
-It reproduces the checked-in example with normalized address spelling:
+Save this as `runs/stm32h7s78/aflConfiguration.json`, beside the extracted binary
+and a copy of `stm32h7s78-dk.syms`. It reproduces the checked-in example with
+normalized address spelling:
 
 ```json
 {
@@ -307,11 +325,12 @@ It reproduces the checked-in example with normalized address spelling:
   "mmio": [
     {"mmio_start": "0x40000000", "mmio_end": "0x60000000"}
   ],
+  "symbols": "stm32h7s78-dk.syms",
   "patch": [
-    {"addr": "0x08002648", "name": "HAL_Delay"},
-    {"addr": "0x080002c8", "name": "uart_printf"}
+    {"addr": "0x08002648", "hook": "HAL_Delay"},
+    {"addr": "0x080002c8", "hook": "uart_printf"},
+    {"symbol": "HAL_UART_Receive", "hook": "uart_recv"}
   ],
-  "symbolize_at_pc": ["0x0800041e"],
   "aflPanicAddr": "0x080021ea",
   "aflDmesgAddr": "0x080021ea",
   "entry_address": "0x080024cd",
