@@ -1,6 +1,21 @@
 # Concolic Fuzzing
 This repo sets up fuzzer and concolic executor for concolic fuzzing. Basically, it compiles triforce-qemu and full system SymQEMU (concolic-executor). triforce-qemu is another project that implements full system fuzzing with the help of rehosting. This setup only supports Linux machine. For a MCU firmware, assume that inputs come from MMIO regions or a socket interface for example, such that we could symbolize a receiving value from any of them to propagate collected constraints through execution and finally let a SMT solver obtain values, that allow an execution to this path.
 
+# Repositories
+
+The engines and their hooks live in three other repositories. This repository
+pins them as git submodules:
+
+| Repository | Checked out at | What it holds |
+| --- | --- | --- |
+| [triforce-qemu](https://github.com/SaerTrial/triforce-qemu) | `triforce-qemu/` | The fuzzer: QEMU with the `rehost-fuzzing` machine, driven by AFL++. |
+| [concolic-executor](https://github.com/SaerTrial/concolic-executor) | `concolic-executor/` | The concolic executor: full-system SymQEMU with the `concolic-execution` machine. |
+| [firmware-hooks](https://github.com/SaerTrial/firmware-hooks) | `triforce-qemu/hooks/` and `concolic-executor/hooks/` | Firmware hooks shared by both engines. See [Firmware hooks](docs/hook-api.md). |
+
+`firmware-hooks` is a submodule of each engine, not of this repository. Both
+engines must pin the same hooks commit. `build_fuzzer_and_concolic_executor.sh`
+checks out all three and stops if the two pins differ.
+
 # Environment Setup
 Install the following for QEMU compile.
 ```
