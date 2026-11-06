@@ -28,6 +28,9 @@ def main():
             if not firmware.is_file():
                 raise ValueError(f"not a firmware file: {firmware}")
             region["file"] = str(firmware)
+        # A symbol-list file is relative to the configuration, like flash files.
+        if isinstance(config.get("symbols"), str):
+            config["symbols"] = str((source.parent / config["symbols"]).resolve(strict=True))
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.error(str(error))
     output.parent.mkdir(parents=True, exist_ok=True)

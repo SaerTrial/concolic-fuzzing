@@ -21,6 +21,14 @@ done
 
 # Keep the emulators at the revisions recorded by the superproject.
 git submodule update --init triforce-qemu concolic-executor
+# Both engines compile the shared hooks; they must pin the same commit.
+for emulator in triforce-qemu concolic-executor; do
+    git -C "$emulator" submodule update --init hooks
+done
+if [[ $(git -C triforce-qemu rev-parse HEAD:hooks) != $(git -C concolic-executor rev-parse HEAD:hooks) ]]; then
+    echo "Error: triforce-qemu and concolic-executor pin different hooks commits; see docs/hook-api.md." >&2
+    exit 1
+fi
 git -C concolic-executor submodule update --init subprojects/symcc-rt
 # The Qsym backend links system Z3; its third_party/z3 checkout is not needed.
 git -C concolic-executor/subprojects/symcc-rt submodule update --init src/backends/qsym/qsym

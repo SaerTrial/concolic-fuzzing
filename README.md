@@ -1,6 +1,21 @@
 # Concolic Fuzzing
 This repo sets up fuzzer and concolic executor for concolic fuzzing. Basically, it compiles triforce-qemu and full system SymQEMU (concolic-executor). triforce-qemu is another project that implements full system fuzzing with the help of rehosting. This setup only supports Linux machine. For a MCU firmware, assume that inputs come from MMIO regions or a socket interface for example, such that we could symbolize a receiving value from any of them to propagate collected constraints through execution and finally let a SMT solver obtain values, that allow an execution to this path.
 
+# Repositories
+
+The engines and their hooks live in three other repositories. This repository
+pins them as git submodules:
+
+| Repository | Checked out at | What it holds |
+| --- | --- | --- |
+| [triforce-qemu](https://github.com/SaerTrial/triforce-qemu) | `triforce-qemu/` | The fuzzer: QEMU with the `rehost-fuzzing` machine, driven by AFL++. |
+| [concolic-executor](https://github.com/SaerTrial/concolic-executor) | `concolic-executor/` | The concolic executor: full-system SymQEMU with the `concolic-execution` machine. |
+| [firmware-hooks](https://github.com/SaerTrial/firmware-hooks) | `triforce-qemu/hooks/` and `concolic-executor/hooks/` | Firmware hooks shared by both engines. See [Firmware hooks](docs/hook-api.md). |
+
+`firmware-hooks` is a submodule of each engine, not of this repository. Both
+engines must pin the same hooks commit. `build_fuzzer_and_concolic_executor.sh`
+checks out all three and stops if the two pins differ.
+
 # Environment Setup
 Install the following for QEMU compile.
 ```
@@ -79,7 +94,7 @@ The symcc fuzzing helper watches new test cases of the main instance, and pick t
 
 You will see in the terminal:
 ```
-[delay_hook_0]
+[HAL_Delay_0]
 Unassigned mem write 0000000040004820 = 0x8
 Unassigned mem write 0000000040004800 = 0x62626242
 Unassigned mem write 0000000040004808 = 0x413e3e3e
@@ -121,13 +136,16 @@ Decompiler and Function Graph can show the executed regions.
 Read [Writing a firmware configuration from scratch](docs/firmware-configuration.md)
 for a step-by-step walkthrough of the STM32H7S78-DK example. It explains how to
 derive addresses from the ELF, prepare a raw flash image, configure memory and
-CPU state, choose MMIO or PC-based symbolization, add hooks and stop conditions,
-schedule interrupts, and validate both engines before fuzzing.
+CPU state, feed input through MMIO or hooked driver functions, add hooks and
+stop conditions, schedule interrupts, and validate both engines before fuzzing.
 
-Both engines accept a shared JSON file through `-kernel`, with some differences:
-`symbolize_at_pc` affects only concolic-executor, and `aflDmesgAddr` currently has no
-active logging effect. The tutorial documents these details and includes a
-complete configuration and commands for replay, AFL, and the concolic helper.
+Both engines accept a shared JSON file through `-kernel`; The tutorial documents these details and
+includes a complete configuration and commands for replay, AFL, and the concolic
+helper.
+
+[Firmware hooks](docs/hook-api.md) explains how to write a hook, such as one that
+feeds input into a UART receive buffer. Each hook is written once and runs in
+both engines.
 
 
 
@@ -147,7 +165,6 @@ complete configuration and commands for replay, AFL, and the concolic helper.
 * More firmset under test (fuzzware, P2IM)
 * Benchmarking pure AFL++ in hybrid mode and the one with concolic execution in use
 * A verifier for symbolic constraint propagation
-* Establish a intermediate layer from C to Python/DSL to easily write a hook func
 
 ## Attribution and licensing
 

@@ -1,0 +1,8 @@
+# Symbol list for stm32h7s78-dk.bin: "address [type] name" per line.
+# Lines picked from: arm-none-eabi-nm stm32h7s78-dk.elf
+# For a stripped image, write the same lines from your disassembler's names.
+08000378 T main
+08000b40 T Error_Handler
+08002648 W HAL_Delay
+08004d50 T HAL_UART_Receive
+080002c8 T uart_printf

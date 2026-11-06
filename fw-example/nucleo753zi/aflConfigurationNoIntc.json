@@ -11,8 +11,8 @@
     "mmio": [{"mmio_start":"0x40000000", "mmio_end": "0x60000000"}
     ],    
     "patch": [
-        {"addr": "0x080024e8", "name": "HAL_Delay"}, 
-        {"addr": "0x80040f8", "name": "printf"}
+        {"addr": "0x080024e8", "hook": "HAL_Delay"},
+        {"addr": "0x80040f8", "hook": "stub"}
     ],
 	"aflPanicAddr": "0x08003d30",
 	"aflDmesgAddr": "0x08003d30",
