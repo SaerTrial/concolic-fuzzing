@@ -173,6 +173,10 @@ file, so a byte the solver changes reaches the same place when the fuzzer runs
 the new input. Nothing needs to be configured. The executor requires
 `SYMCC_MEMORY_INPUT=1`, which `symcc_fuzzing_helper` sets.
 
+To see which input bytes MMIO reads take and which ones your hooks take, run
+an input with `-d concolic_replay -D replay.log` and read the `input[...]`
+lines. [Seeing the tape](hook-api.md#seeing-the-tape) shows an example.
+
 The older `symbolize_at_pc` key has been removed. If your configuration file
 still has a `symbolize_at_pc` entry, both engines print an error and exit before
 running the firmware. The key made memory symbolic without consuming input, so

@@ -48,7 +48,8 @@ engine runs it, and does not return to the caller by itself.
 
 Think of the input file as a tape. Every reader cuts the next bytes off the
 front: an MMIO read of 4 bytes takes 4, and `uart_recv` takes 1. For the STM32
-example, measured with a 4 KiB input:
+example, measured with an input of 4096 `0xfc` bytes
+([Seeing the tape](#seeing-the-tape) shows how):
 
 ```text
 offset:  0 ............ 1663 | 1664 | 1665..1668 | 1669 | 1670..1673 | 1674 | ...
@@ -66,12 +67,68 @@ Here is what happens to the first key:
 
 | Step | Fuzzer | Concolic executor |
 | --- | --- | --- |
-| `uart_recv` takes byte 1664 (`0xff`) | `key = 0xff` | `key = 0xff`, known as `input[1664]` |
+| `uart_recv` takes byte 1664 (`0xfc`) | `key = 0xfc` | `key = 0xfc`, known as `input[1664]` |
 | `if (key == 's')` | not taken | not taken; the solver is asked: "when is `input[1664] == 's'`?" |
 | Solver answer | | a new input file, the same as before but with byte 1664 = `0x73` |
 | The fuzzer runs that new file | `key = 's'`, the branch is taken | |
 
 We ran exactly this on `alexis`, and the new input reached `0x0800043a`.
+
+### Seeing the tape
+
+Both engines print the tape in their log, one line for each read. The diagram
+above comes from this run:
+
+```sh
+head -c 4096 /dev/zero | tr '\0' '\374' > input      # 4096 bytes of 0xfc
+mkdir -p solved
+SYMCC_MEMORY_INPUT=1 SYMCC_OUTPUT_DIR=solved \
+  ./concolic-executor/build/qemu-system-arm -M concolic-execution -display none \
+  -kernel fw-example/stm32h7s78-dk/aflConfiguration.json \
+  -replayFile input -d concolic_replay -D replay.log
+grep '^input\[' replay.log
+```
+
+```text
+input[0..3]          MMIO 0x58024410 = 0xfcfcfcfc    <- startup: 416 reads, 4 bytes each
+input[4..7]          MMIO 0x58024400 = 0xfcfcfcfc
+...
+input[1660..1663]    MMIO 0x58023014 = 0xfcfcfcfc
+input[1664]          hook uart_recv -> 0x2000ffe3    <- the first key
+input[1665..1668]    MMIO 0x58023014 = 0xfcfcfcfc    <- the LED toggle
+input[1669]          hook uart_recv -> 0x2000ffe3    <- the second key
+...
+input[4094]          hook uart_recv -> 0x2000ffe3
+input runs out: a 4-byte read at offset 4095 goes past the end of the 4096-byte input; the run ends
+```
+
+Read a line from left to right:
+
+- `input[1664]` says which bytes of the input file were taken. It is also the
+  name the solver uses, so a solved input changes exactly these bytes.
+- `hook uart_recv -> 0x2000ffe3`: the hook `uart_recv` took the byte and stored
+  it at that guest address, the stack variable `key`. These are the bytes your
+  hooks control; `grep ' hook ' replay.log` lists only them.
+- `MMIO 0x58023014 = 0xfcfcfcfc`: the firmware read that register, and these
+  bytes were the value it got.
+
+The tape also shows where input goes to waste. Run 4096 zero bytes instead,
+and the key is never read: after 3 reads, the firmware reads the status
+register `0x5802480c` 1021 times in a row, waiting for a bit that zero never
+sets, until the input runs out.
+
+The fuzzer prints the same lines with `-d afl_fuzzing_log`. Both engines must
+cut the tape in the same way, so the two lists must be equal:
+
+```sh
+./triforce-qemu/build/qemu-system-arm -M rehost-fuzzing -display none \
+  -kernel fw-example/stm32h7s78-dk/aflConfiguration.json \
+  -aflFile input -d afl_fuzzing_log -D fuzzer.log
+diff <(grep '^input\[' fuzzer.log) <(grep '^input\[' replay.log) && echo "same tape"
+```
+
+Without a `-d` option, nothing is formatted, so the log costs no speed while
+fuzzing.
 
 ### What went wrong before
 
@@ -185,7 +242,7 @@ The code is split so that only five small calls differ between the engines:
 | --- | --- | --- | --- |
 | Hooks | `hooks/hooks.c` | once | What the firmware function should do. |
 | API | `hooks/hook_api.h` | once | The calls in section 3. |
-| Core | `hooks/core.c` | once | Configuration, dispatch, copies into guest memory. |
+| Core | `hooks/core.c` | once | Configuration, dispatch, copies into guest memory, the tape log. |
 | ABI | `hooks/arm/abi.c` | once per architecture | Where registers, arguments, return value and return address live. |
 | Port | `hw/<engine>/hook_port.c` | once per engine | Input tape and symbolic bookkeeping, with no architecture code. |
 
@@ -200,6 +257,7 @@ firmware: bl HAL_UART_Receive -> a new translation block starts at 0x08004d50
   abi.c             hook_arg(cs, 1) = r1, hook_arg(cs, 2) = r2
   core.c            hook_input_to_guest(cs, buf, 1)
   port                hook_port_take_input: offset = cursor; getFuzz(...)
+  core.c              log "input[1664]  hook uart_recv -> 0x2000ffe3" (with -d)
   core.c              copy into guest RAM, one page at a time
   port                hook_port_mem_input(host, 1, offset)
                         fuzzer: nothing    concolic: host byte = input[offset]
@@ -226,7 +284,9 @@ a new architecture needs only a new `hooks/<arch>/abi.c`; neither port changes.
 
 MMIO reads follow the same rule: the concolic executor names them
 `input[cursor]`, `input[cursor + 1]`, …, so hook input and MMIO input mix
-freely on one tape.
+freely on one tape. Each MMIO read also writes its tape line through
+`hook_log_input` in `core.c`, so both engines and both kinds of read log in
+one format (section 2).
 
 **Why copy page by page?** Two guest pages next to each other need not be next
 to each other in host memory. Say a buffer starts 4 bytes before a page
@@ -249,8 +309,9 @@ keeps hooks working if chaining is ever turned on.
 different hook commits.
 
 To check a change, run the same firmware and input in both engines and compare
-the traces, as `tests/check_coverage_export.py` does. Also replay a concolic
-test case in the fuzzer, and check that it reaches the branch it was solved for.
+the traces, as `tests/check_coverage_export.py` does, and their tapes (section 2).
+Also replay a concolic test case in the fuzzer, and check that it reaches the
+branch it was solved for.
 
 ## 7. Limits
 
