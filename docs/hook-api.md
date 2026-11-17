@@ -130,6 +130,12 @@ diff <(grep '^input\[' fuzzer.log) <(grep '^input\[' replay.log) && echo "same t
 Without a `-d` option, nothing is formatted, so the log costs no speed while
 fuzzing.
 
+With a `boot` section that names a boot file, the startup reads take their
+bytes from that file and appear as `boot[…]` lines. The fuzz input then starts
+at the boot target, so the first key above becomes `input[4]`.
+[Boot: say where fuzzing should start](firmware-configuration.md#boot-say-where-fuzzing-should-start)
+describes the section.
+
 ### What went wrong before
 
 The old configuration had no receive hook. It used `symbolize_at_pc`, which

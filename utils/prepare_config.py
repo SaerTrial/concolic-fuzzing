@@ -31,6 +31,10 @@ def main():
         # A symbol-list file is relative to the configuration, like flash files.
         if isinstance(config.get("symbols"), str):
             config["symbols"] = str((source.parent / config["symbols"]).resolve(strict=True))
+        # So is the boot input.
+        boot = config.get("boot")
+        if isinstance(boot, dict) and isinstance(boot.get("input"), str):
+            boot["input"] = str((source.parent / boot["input"]).resolve(strict=True))
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.error(str(error))
     output.parent.mkdir(parents=True, exist_ok=True)
