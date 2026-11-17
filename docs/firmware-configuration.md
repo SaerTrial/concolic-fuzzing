@@ -183,6 +183,98 @@ running the firmware. The key made memory symbolic without consuming input, so
 solved bytes landed at the wrong input positions. Hook the function that
 receives the input instead. [Firmware hooks](hook-api.md) explains why.
 
+### Boot: say where fuzzing should start
+
+Before the STM32 example reads its first key, startup code makes 415 MMIO
+reads. Every input has to carry those 1660 bytes, every run repeats that code,
+and a mutation there usually breaks boot. The optional `boot` section tells
+both engines what a good boot is and where it ends:
+
+```json
+"boot": {
+  "required": ["init_done"],
+  "avoid": ["Error_Handler"],
+  "target": "main_loop",
+  "input": "boot.bin"
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `target` | The address at which the firmware has booted. Required. |
+| `required` | Addresses a good boot must reach before `target`. Optional list. |
+| `avoid` | Addresses that mean boot failed. Optional list. |
+| `input` | A file with the bytes that answer MMIO and hook reads during boot. Optional. |
+
+Each address is a `0x…` value or a name from the `symbols` list. It must be the
+start of a translation block: a function entry or a branch target. An address
+in the middle of a block is never seen.
+
+`input` is not firmware code. A bootloader inside the firmware image still
+comes from `flash.file`; put `target` after it.
+
+**Without `input`,** runs start from reset as before, and each run's boot is
+judged:
+
+- Reaching an `avoid` address ends the run at once. The fuzzer also reports no
+  coverage for it, so AFL++ never keeps an input that fails to boot.
+- At `target`, the log says where boot ended on the tape:
+  `passed boot at input[1660]: all required addresses reached`.
+
+If every seed reaches an `avoid` address, AFL++ gets no coverage at all and
+cannot make progress, so list only addresses that really mean failure.
+
+**With `input`,** boot runs once and fuzzing starts at `target`:
+
+- Until `target`, reads take their bytes from the boot file, as plain values.
+  The log shows them as `boot[…]` lines.
+- At `target`, the fuzzer starts its fork server, so later runs do not repeat
+  boot. The concolic executor starts naming input bytes there.
+- The fuzz input then starts at `input[0]`: its first byte is the first byte
+  read after boot.
+
+In a 90-second test with the STM32 example, the fuzzer ran 449 inputs per
+second with `input` and 131 without.
+
+A boot file that does not fit stops the engine at startup with exit code 1:
+
+```text
+boot: cannot read /path/boot.bin, or it is empty
+boot: boot.bin reached avoid address 0x08000b40
+boot: boot.bin reached the boot target without required address 0x08004d50
+boot: boot.bin (1200 bytes) ran out before the boot target
+boot: boot.bin ended the run at 0x08000b40 before the boot target
+boot: boot.bin did not reach the boot target 0x080021e8 after 10000000 blocks; is that address the start of a block?
+```
+
+With empty `required` and `avoid` lists, any file that reaches `target`
+passes. Bytes left in the file at `target` are ignored.
+
+AFL++ hides these messages and only reports a failed fork server handshake.
+Check a configuration first by running the fuzzer engine once on its own:
+
+```sh
+./triforce-qemu/build/qemu-system-arm -M rehost-fuzzing -display none \
+  -kernel fw-example/stm32h7s78-dk/aflConfigurationBoot.json \
+  -aflFile seed -d afl_fuzzing_log -D boot.log
+grep '^boot: ' boot.log
+```
+
+```text
+boot: boot.bin passed boot (target 0x080003ee) after 415 reads, 1660 bytes used
+```
+
+To make a boot file, run an input that boots without `input` in the
+configuration, read *k* from its `passed boot at input[k]` line, and keep the
+first *k* bytes: `head -c 1660 good-input > boot.bin`.
+
+Fuzz inputs no longer contain boot bytes. Seeds must be inputs for the code
+after boot (`tail -c +1661 good-input > seed`), and a queue from a campaign
+without `input` cannot be reused: start a new output directory.
+
+`fw-example/stm32h7s78-dk/aflConfigurationBoot.json` is the STM32 example with
+this section, and `tests/check_boot_section.py` checks it in both engines.
+
 ## 6. Choose hooks, normal stops, and crashes
 
 ### Bypass functions with `patch`

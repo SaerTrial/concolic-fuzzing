@@ -6,3 +6,5 @@
 08002648 W HAL_Delay
 08004d50 T HAL_UART_Receive
 080002c8 T uart_printf
+08000396 T init_done
+080003ee T main_loop
